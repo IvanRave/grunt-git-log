@@ -32,7 +32,7 @@ module.exports = function (grunt) {
 
 		grunt.log.writeln("Executing command: git " + gitArgs.join(' ') + "\n");
 
-		grunt.utils.spawn({
+		grunt.util.spawn({
 			cmd : 'git',
 			args : gitArgs
 		}, function (err, result) {
