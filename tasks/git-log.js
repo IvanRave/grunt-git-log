@@ -6,25 +6,23 @@ module.exports = function (grunt) {
 
 		this.requiresConfig('gitlog');
 
-		var config = grunt.config('gitlog'),
+		var config = grunt.config.get('gitlog'),
 		done = this.async(),
-		afterDate = config.afterDate,
-		beforeDate = config.beforeDate,
+		afterDate,
+		beforeDate,
 		dest,
 		gitArgs = ['log', '--pretty=format:"%B%n"', '--date-order', '--no-merges'];
 
-		if (config.dest !== undefined) {
-			dest = grunt.template.process(config.dest);
-		}
-
-		if (!afterDate) {
-			var oneDayAgo = Date.now() - (1000 * 60 * 60 * 24);
-			afterDate = new Date(oneDayAgo);
-		}
-
-		if (!beforeDate) {
-			beforeDate = new Date();
-		}
+    if (config) {
+      var opts = config.options;
+      if (opts){
+        afterDate = opts.afterDate || new Date(Date.now() - (1000 * 60 * 60 * 24)),
+        beforeDate = opts.beforeDate || new Date(),
+        if (opts.dest){
+          dest = grunt.template.process(opts.dest);
+        }
+      }
+    }
 
 		gitArgs.push('--after="' + dateFormat(afterDate, "isoDateTime") + '"');
 
