@@ -1,7 +1,52 @@
 var dateFormat = require('dateformat');
 
-exports.init = function (config, done, grunt) {
+var cbkSpawn = function (grunt, done, dest, separator, err, result) {
+	if (err) {
+		grunt.log.error(err);
+		return done(false);
+	}
 
+	if (dest !== undefined) {
+		var listOfBodyOfCommit = result.toString().split(separator);
+
+		var listOfTabBody = [];
+
+		var maxTimeLength = 'time: 12h:34'.length;
+
+		listOfBodyOfCommit.forEach(function (commitItem) {
+			var timeIndex = commitItem.indexOf('time:');
+
+			var timeStr;
+			var mainStr;
+
+			if (timeIndex >= 0) {
+				timeStr = commitItem.substr(timeIndex, maxTimeLength);
+				timeStr = timeStr.replace('time:', '').replace('h', '').trim();
+				// Remove this part from the item (the time part - last part)
+				mainStr = commitItem.substr(0, timeIndex);
+			} else {
+				mainStr = commitItem;
+			}
+
+			// Remove enters and trim the string
+			mainStr = mainStr.replace(/\n/g, ' ').trim();
+
+			if (mainStr) {
+				listOfTabBody.push(mainStr + '\t' + (timeStr || 0));
+			}
+		});
+
+		grunt.file.write(dest, listOfTabBody.join('\n'));
+		grunt.log.ok('Git log written to ' + dest);
+
+	} else {
+		grunt.log.write(result);
+	}
+
+	done();
+};
+
+exports.init = function (config, done, grunt) {
 	var separator = '==--==';
 	// format:"%B%n"
 	// format:%s#%b
@@ -32,51 +77,7 @@ exports.init = function (config, done, grunt) {
 	grunt.util.spawn({
 		cmd : 'git',
 		args : gitArgs
-	}, function (err, result) {
-		if (err) {
-			grunt.log.error(err);
-			return done(false);
-		}
-
-		if (dest !== undefined) {
-			var listOfBodyOfCommit = result.toString().split(separator);
-
-			var listOfTabBody = [];
-
-			var maxTimeLength = 'time: 12h:34'.length;
-
-			listOfBodyOfCommit.forEach(function (commitItem) {
-				var timeIndex = commitItem.indexOf('time:');
-
-				var timeStr;
-				var mainStr;
-
-				if (timeIndex >= 0) {
-					timeStr = commitItem.substr(timeIndex, maxTimeLength);
-					timeStr = timeStr.replace('time:', '').replace('h', '').trim();
-					// Remove this part from the item (the time part - last part)
-					mainStr = commitItem.substr(0, timeIndex);
-				} else {
-					mainStr = commitItem;
-				}
-
-				// Remove enters and trim the string
-				mainStr = mainStr.replace(/\n/g, ' ').trim();
-
-				if (mainStr) {
-					listOfTabBody.push(mainStr + '\t' + (timeStr || 0));
-				}
-			});
-
-			grunt.file.write(dest, listOfTabBody.join('\n'));
-			grunt.log.ok('Git log written to ' + dest);
-
-		} else {
-			grunt.log.write(result);
-		}
-
-		done();
-	});
+	}, cbkSpawn.bind(null, grunt, done, dest, separator));
 };
 
 module.exports = exports;
